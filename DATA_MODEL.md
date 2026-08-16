@@ -1,3 +1,4 @@
+---
 # Project Nutrition — Data Model
 
 **Status:** Approved for MVP implementation
@@ -104,6 +105,7 @@ Fields:
 - `birth_date` optional
 - `biological_sex` optional
 - `height_cm` optional
+- `current_weight_kg` optional derived from latest entry
 - `activity_level`
 - `timezone`
 - `preferred_units`
