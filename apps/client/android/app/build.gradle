@@ -51,25 +51,13 @@ android {
     }
 
     signingConfigs {
-        debug {
-            // Use default Android debug keystore if project keystore doesn't exist
-            def debugKeystore = file('debug.keystore')
-            if (!debugKeystore.exists()) {
-                debugKeystore = file(System.getProperty('user.home') + '/.android/debug.keystore')
-            }
-            storeFile debugKeystore
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-        }
-        release {
-            // Will be configured via environment or local.properties
-            // For CI/CD: storeFile, storePassword, keyAlias, keyPassword
-        }
+        // Use Flutter default debug signing (auto-generated)
+        // No explicit storeFile needed - Flutter handles this
     }
 
     buildTypes {
         debug {
+            // Use default debug signing config
             signingConfig signingConfigs.debug
             applicationIdSuffix ".debug"
             debuggable true
