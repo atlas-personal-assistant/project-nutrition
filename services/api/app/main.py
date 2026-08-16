@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -39,7 +41,16 @@ async def startup():
 # Health check
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "version": "0.1.0"}
+    return {"status": "ok", "version": "0.1.0", "database": "connected"}
+
+# Database info
+@app.get("/api/v1/database/info")
+async def database_info(db: Session = Depends(get_db)):
+    """Get database connection info for debugging"""
+    from sqlalchemy import text
+    result = db.execute(text("SELECT version()"))
+    version = result.scalar()
+    return {"database_version": version}
 
 # Authentication
 @app.post("/api/v1/auth/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)

@@ -56,6 +56,9 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     display_name = Column(String(255), nullable=False)
+    first_name = Column(String(255), nullable=True)
+    last_name = Column(String(255), nullable=True)
+    avatar_url = Column(String(500), nullable=True)
     status = Column(String(50), default=UserStatus.ACTIVE)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -95,6 +98,8 @@ class Space(Base):
     owner_user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     status = Column(String(50), default=SpaceStatus.ACTIVE)
     invite_code = Column(String(20), unique=True, nullable=True, index=True)
+    type = Column(String(50), default="family")
+    description = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
     
