@@ -37,6 +37,8 @@ android {
 
     kotlinOptions {
         jvmTarget = '17'
+        // Opt-in to new Kotlin/AGP DSL if required by Flutter
+        // No explicit languageVersion needed - uses default
     }
 
     defaultConfig {
