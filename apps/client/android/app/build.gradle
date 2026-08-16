@@ -29,6 +29,8 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // Flag to enable support for the new language APIs
+        coreLibraryDesugaringEnabled true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -43,6 +45,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
+        multiDexEnabled true
     }
 
     signingConfigs {
@@ -74,4 +77,10 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Required for coreLibraryDesugaringEnabled
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    implementation 'androidx.multidex:multidex:2.0.1'
 }
