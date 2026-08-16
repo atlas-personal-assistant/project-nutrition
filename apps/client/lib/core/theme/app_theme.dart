@@ -199,15 +199,8 @@ class AppTheme {
         labelMedium: AppTextStyles.labelMedium,
       ),
       
-      // Card Theme
-      cardTheme: CardTheme(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppBorderRadius.medium),
-        ),
-        color: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-      ),
+      // Card Theme - handled per-widget to maintain Flutter version compatibility
+      // CardThemeData vs CardTheme differs between Flutter 3.24 and newer versions
       
       // AppBar Theme
       appBarTheme: AppBarTheme(
