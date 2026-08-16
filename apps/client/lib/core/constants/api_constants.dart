@@ -3,7 +3,7 @@ class ApiConstants {
   // TODO: Configure via environment variables or build flavors
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://187.124.23.28:8000',
+    defaultValue: 'http://187.124.23.28',
   );
   
   static const String apiVersion = '/api/v1';
