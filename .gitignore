@@ -1,0 +1,59 @@
+# Flutter / Dart
+apps/client/.dart_tool/
+apps/client/.flutter-plugins
+apps/client/.flutter-plugins-dependencies
+apps/client/.packages
+apps/client/build/
+apps/client/ios/Flutter/.last_build_id
+apps/client/ios/Pods/
+apps/client/ios/.symlinks/
+apps/client/macos/Flutter/ephemeral/
+apps/client/windows/Flutter/ephemeral/
+apps/client/linux/flutter/ephemeral/
+apps/client/web/
+apps/client/.metadata
+apps/client/pubspec.lock
+*.iml
+
+# Python / FastAPI
+services/api/__pycache__/
+services/api/*.py[cod]
+services/api/*$py.class
+services/api/.venv/
+services/api/venv/
+services/api/env/
+services/api/.env
+services/api/.env.local
+services/api/.env.*.local
+services/api/*.egg-info/
+services/api/dist/
+services/api/.pytest_cache/
+services/api/.mypy_cache/
+services/api/htmlcov/
+
+# Docker
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+*.key
+*.pem
+.env
+.env.local
+.env.*.local
+secrets/
+
+# Temp
+tmp/
+temp/
+*.tmp
