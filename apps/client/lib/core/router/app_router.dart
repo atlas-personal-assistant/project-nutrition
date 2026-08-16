@@ -8,14 +8,16 @@ import '../../features/home/screens/home_screen.dart';
 import '../../features/space/screens/create_space_screen.dart';
 import '../../features/space/screens/join_space_screen.dart';
 import '../../features/space/screens/space_detail_screen.dart';
-import '../storage/secure_storage.dart';
+import '../../features/auth/providers/auth_provider.dart';
 
 // Router state
 final routerProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authProvider);
+  
   return GoRouter(
-    initialLocation: '/',
-    redirect: (context, state) async {
-      final isLoggedIn = await SecureStorage().isLoggedIn();
+    initialLocation: '/login',
+    redirect: (context, state) {
+      final isLoggedIn = authState.user != null;
       final isAuthRoute = state.matchedLocation == '/login' || 
                           state.matchedLocation == '/register';
       
