@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../auth/models/auth_models.dart';
 import '../../space/providers/space_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
