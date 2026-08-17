@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Für Release erstellen
     
     steps:
     - uses: actions/checkout@v4
@@ -48,5 +50,3 @@ jobs:
       with:
         files: apps/client/build/app/outputs/flutter-apk/app-debug.apk
         generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
