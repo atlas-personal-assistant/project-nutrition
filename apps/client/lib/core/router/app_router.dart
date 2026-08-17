@@ -10,24 +10,56 @@ import '../../features/space/screens/join_space_screen.dart';
 import '../../features/space/screens/space_detail_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
-// Router state
+// Custom Listenable that bridges Riverpod to GoRouter
+class AuthRefreshNotifier extends ChangeNotifier {
+  AuthStatus _status = AuthStatus.initial;
+  
+  AuthStatus get status => _status;
+  
+  void update(AuthStatus newStatus) {
+    if (_status != newStatus) {
+      _status = newStatus;
+      notifyListeners();
+    }
+  }
+}
+
+final authRefreshProvider = Provider<AuthRefreshNotifier>((ref) {
+  return AuthRefreshNotifier();
+});
+
+// Router provider
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final authNotifier = ref.watch(authProvider);
+  final refreshNotifier = ref.watch(authRefreshProvider);
+  
+  // Update refresh notifier when auth changes
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    refreshNotifier.update(authNotifier.state.status);
+  });
   
   return GoRouter(
     initialLocation: '/login',
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
-      final isLoggedIn = authState.user != null;
-      final isAuthRoute = state.matchedLocation == '/login' || 
-                          state.matchedLocation == '/register';
+      final authState = authNotifier.state;
+      final isLoading = authState.status == AuthStatus.loading;
+      final isAuthenticated = authState.status == AuthStatus.authenticated;
       
-      // Not logged in and trying to access protected route
-      if (!isLoggedIn && !isAuthRoute) {
+      final isLogin = state.matchedLocation == '/login';
+      final isRegister = state.matchedLocation == '/register';
+      final isAuthRoute = isLogin || isRegister;
+      
+      // Während loading: keine Umleitung
+      if (isLoading) return null;
+      
+      // Nicht eingeloggt → Login
+      if (!isAuthenticated && !isAuthRoute) {
         return '/login';
       }
       
-      // Logged in and trying to access auth routes
-      if (isLoggedIn && isAuthRoute) {
+      // Eingeloggt → Home
+      if (isAuthenticated && isAuthRoute) {
         return '/';
       }
       

@@ -5,6 +5,13 @@ import 'package:go_router/go_router.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
+import 'features/auth/providers/auth_provider.dart';
+import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/register_screen.dart';
+import 'features/home/screens/home_screen.dart';
+import 'features/space/screens/create_space_screen.dart';
+import 'features/space/screens/join_space_screen.dart';
+import 'features/space/screens/space_detail_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +25,9 @@ void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
+// Global refresh notifier for GoRouter
+final _routerRefreshNotifier = ValueNotifier<AuthStatus>(AuthStatus.initial);
+
 class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
@@ -26,32 +36,77 @@ class MyApp extends ConsumerStatefulWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
-  GoRouter? _router;
+  late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
-    // Initialize router synchronously
-    _router = ref.read(routerProvider);
+    _router = GoRouter(
+      initialLocation: '/login',
+      refreshListenable: _routerRefreshNotifier,
+      redirect: (context, state) {
+        final authState = _routerRefreshNotifier.value;
+        final isLoading = authState == AuthStatus.loading;
+        final isAuthenticated = authState == AuthStatus.authenticated;
+        
+        final isLogin = state.matchedLocation == '/login';
+        final isRegister = state.matchedLocation == '/register';
+        final isAuthRoute = isLogin || isRegister;
+        
+        if (isLoading) return null;
+        if (!isAuthenticated && !isAuthRoute) return '/login';
+        if (isAuthenticated && isAuthRoute) return '/';
+        
+        return null;
+      },
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => const LoginScreen(),
+        ),
+        GoRoute(
+          path: '/register',
+          builder: (context, state) => const RegisterScreen(),
+        ),
+        GoRoute(
+          path: '/space/create',
+          builder: (context, state) => const CreateSpaceScreen(),
+        ),
+        GoRoute(
+          path: '/space/join',
+          builder: (context, state) => const JoinSpaceScreen(),
+        ),
+        GoRoute(
+          path: '/space/:id',
+          builder: (context, state) => SpaceDetailScreen(
+            spaceId: state.pathParameters['id']!,
+          ),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_router == null) {
-      return MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      );
-    }
+    // Watch auth changes and update the global notifier
+    final authState = ref.watch(authProvider).state;
+    
+    // Update notifier when auth changes (triggers GoRouter redirect)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_routerRefreshNotifier.value != authState.status) {
+        _routerRefreshNotifier.value = authState.status;
+      }
+    });
 
     return MaterialApp.router(
       title: 'Project Nutrition',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      routerConfig: _router!,
+      routerConfig: _router,
     );
   }
 }

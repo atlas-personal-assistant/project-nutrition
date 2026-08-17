@@ -33,7 +33,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
     
-    await ref.read(authProvider.notifier).register(
+    await ref.read(authProvider).register(
       email: _emailController.text.trim(),
       password: _passwordController.text,
       displayName: _nameController.text.trim(),
@@ -42,14 +42,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
+    final authNotifier = ref.watch(authProvider);
+    final authState = authNotifier.state;
     
-    // Listen for auth success
-    ref.listen(authProvider, (previous, current) {
-      if (current.user != null && previous?.user == null) {
-        context.go('/');
-      }
-    });
+    // Listen for auth success — Router macht die Navigation!
+    // Keine manuelle Navigation mehr nötig
 
     return Scaffold(
       appBar: AppBar(

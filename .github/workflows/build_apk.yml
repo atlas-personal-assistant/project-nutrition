@@ -1,0 +1,60 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+    
+    - name: Get dependencies
+      run: |
+        cd apps/client
+        flutter pub get
+    
+    - name: Build APK
+      run: |
+        cd apps/client
+        flutter build apk --debug
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-apk
+        path: apps/client/build/app/outputs/flutter-apk/app-debug.apk
+    
+    - name: Create Release
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: apps/client/build/app/outputs/flutter-apk/app-debug.apk
+        tag_name: v${{ github.run_number }}-debug
+        name: Debug Build ${{ github.run_number }}
+        body: |
+          Automatischer Debug Build
+          
+          Änderungen in diesem Build:
+          - API Integration mit Server
+          - Neue Auth/Space Services
+          - Server-Client Verbindung
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

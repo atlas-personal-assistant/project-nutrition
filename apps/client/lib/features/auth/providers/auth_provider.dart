@@ -1,82 +1,68 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
-
+import '../../../core/services/api_auth_service.dart';
 import '../models/auth_models.dart';
-import '../../../core/network/dio_client.dart';
-import '../../../core/storage/secure_storage.dart';
-import '../../../core/constants/api_constants.dart';
 
-// Auth state
+enum AuthStatus { initial, loading, authenticated, unauthenticated }
+
 class AuthState {
   final User? user;
-  final bool isLoading;
+  final AuthStatus status;
   final String? error;
 
   const AuthState({
     this.user,
-    this.isLoading = false,
+    this.status = AuthStatus.initial,
     this.error,
   });
 
-  AuthState copyWith({
-    User? user,
-    bool? isLoading,
-    String? error,
-  }) {
-    return AuthState(
-      user: user ?? this.user,
-      isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
-    );
-  }
+  bool get isLoading => status == AuthStatus.loading;
+  bool get isAuthenticated => status == AuthStatus.authenticated;
+  bool get isUnauthenticated => status == AuthStatus.unauthenticated;
 }
 
-// Auth Notifier
-class AuthNotifier extends StateNotifier<AuthState> {
-  final DioClient _dioClient;
-  final SecureStorage _secureStorage;
+class AuthNotifier extends ChangeNotifier {
+  AuthState _state = const AuthState(status: AuthStatus.initial);
+  
+  AuthState get state => _state;
+  
+  AuthNotifier() {
+    checkAuthStatus();
+  }
 
-  AuthNotifier({
-    DioClient? dioClient,
-    SecureStorage? secureStorage,
-  })  : _dioClient = dioClient ?? DioClient(),
-        _secureStorage = secureStorage ?? SecureStorage(),
-        super(const AuthState());
+  void _setState(AuthState newState) {
+    _state = newState;
+    notifyListeners();
+  }
 
   Future<void> register({
     required String email,
     required String password,
     required String displayName,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
+    _setState(const AuthState(status: AuthStatus.loading));
     
     try {
-      final response = await _dioClient.dio.post(
-        ApiConstants.register,
-        data: {
-          'email': email,
-          'password': password,
-          'display_name': displayName,
-        },
+      final userData = await ApiAuthService.registerUser(
+        email: email.trim(),
+        password: password,
+        displayName: displayName.trim(),
       );
-      
-      final authResponse = AuthResponse.fromJson(response.data);
-      
-      await _secureStorage.setTokens(
-        accessToken: authResponse.accessToken,
-        refreshToken: authResponse.refreshToken,
-      );
-      await _secureStorage.setUserId(authResponse.user.id);
-      
-      state = state.copyWith(
-        user: authResponse.user,
-        isLoading: false,
-      );
-    } on DioException catch (e) {
-      final errorMsg = e.response?.data?['detail'] ?? 'Registration failed';
-      state = state.copyWith(isLoading: false, error: errorMsg);
+
+      if (userData.isNotEmpty) {
+        final user = _createUserFromData(userData);
+        _setState(AuthState(user: user, status: AuthStatus.authenticated));
+      } else {
+        _setState(const AuthState(
+          status: AuthStatus.unauthenticated,
+          error: 'Registrierung fehlgeschlagen',
+        ));
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'An unexpected error occurred');
+      _setState(AuthState(
+        status: AuthStatus.unauthenticated,
+        error: 'Registrierung fehlgeschlagen: $e',
+      ));
     }
   }
 
@@ -84,62 +70,56 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String email,
     required String password,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
+    _setState(const AuthState(status: AuthStatus.loading));
     
     try {
-      final response = await _dioClient.dio.post(
-        ApiConstants.login,
-        data: {
-          'email': email,
-          'password': password,
-        },
+      final userData = await ApiAuthService.loginUser(
+        email: email.trim(),
+        password: password,
       );
-      
-      final authResponse = AuthResponse.fromJson(response.data);
-      
-      await _secureStorage.setTokens(
-        accessToken: authResponse.accessToken,
-        refreshToken: authResponse.refreshToken,
-      );
-      await _secureStorage.setUserId(authResponse.user.id);
-      
-      state = state.copyWith(
-        user: authResponse.user,
-        isLoading: false,
-      );
-    } on DioException catch (e) {
-      final errorMsg = e.response?.data?['detail'] ?? 'Login failed';
-      state = state.copyWith(isLoading: false, error: errorMsg);
+
+      final user = _createUserFromData(userData);
+      _setState(AuthState(user: user, status: AuthStatus.authenticated));
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'An unexpected error occurred');
+      _setState(const AuthState(
+        status: AuthStatus.unauthenticated,
+        error: 'E-Mail oder Passwort falsch',
+      ));
     }
   }
 
   Future<void> logout() async {
-    await _secureStorage.clearAll();
-    state = const AuthState();
+    await ApiAuthService.logout();
+    _setState(const AuthState(status: AuthStatus.unauthenticated));
   }
 
   Future<void> checkAuthStatus() async {
-    final isLoggedIn = await _secureStorage.isLoggedIn();
-    if (!isLoggedIn) {
-      state = const AuthState();
-      return;
+    final userData = await ApiAuthService.getCurrentUser();
+    if (userData != null) {
+      final user = _createUserFromData(userData);
+      _setState(AuthState(user: user, status: AuthStatus.authenticated));
+    } else {
+      _setState(const AuthState(status: AuthStatus.unauthenticated));
     }
+  }
 
-    try {
-      final response = await _dioClient.dio.get(ApiConstants.me);
-      final user = User.fromJson(response.data);
-      state = state.copyWith(user: user);
-    } catch (e) {
-      // Token invalid, clear storage
-      await _secureStorage.clearAll();
-      state = const AuthState();
-    }
+  User _createUserFromData(Map<String, dynamic> data) {
+    return User(
+      id: data['id']?.toString() ?? '',
+      email: data['email']?.toString() ?? '',
+      displayName: data['username']?.toString() ?? '',
+      status: 'active',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  Future<void> clearAllData() async {
+    await ApiAuthService.clearAll();
+    _setState(const AuthState(status: AuthStatus.unauthenticated));
   }
 }
 
-// Provider
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authProvider = ChangeNotifierProvider<AuthNotifier>((ref) {
   return AuthNotifier();
 });

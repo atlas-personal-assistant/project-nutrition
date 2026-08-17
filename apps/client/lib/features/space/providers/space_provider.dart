@@ -1,9 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 
 import '../models/space_models.dart';
-import '../../../core/network/dio_client.dart';
-import '../../../core/constants/api_constants.dart';
+import '../../../core/services/api_space_service.dart';
 
 // Space state
 class SpaceState {
@@ -29,60 +27,47 @@ class SpaceState {
       spaces: spaces ?? this.spaces,
       currentSpace: currentSpace ?? this.currentSpace,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: error,
     );
   }
 }
 
 // Space Notifier
 class SpaceNotifier extends StateNotifier<SpaceState> {
-  final DioClient _dioClient;
-
-  SpaceNotifier({DioClient? dioClient})
-      : _dioClient = dioClient ?? DioClient(),
-        super(const SpaceState());
+  SpaceNotifier() : super(const SpaceState());
 
   Future<void> loadSpaces() async {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      final response = await _dioClient.dio.get(ApiConstants.spaces);
-      final spaces = (response.data as List)
-          .map((json) => Space.fromJson(json))
-          .toList();
+      final spacesData = await ApiSpaceService.getSpaces();
+      final spaces = spacesData.map((json) => Space.fromJson(json)).toList();
       
       state = state.copyWith(
         spaces: spaces,
         isLoading: false,
       );
-    } on DioException catch (e) {
-      final errorMsg = e.response?.data?['detail'] ?? 'Failed to load spaces';
-      state = state.copyWith(isLoading: false, error: errorMsg);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'An unexpected error occurred');
+      state = state.copyWith(isLoading: false, error: 'Fehler beim Laden: $e');
     }
   }
 
-  Future<void> createSpace({required String name}) async {
+  Future<void> createSpace({required String name, String description = ''}) async {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      final response = await _dioClient.dio.post(
-        ApiConstants.spaces,
-        data: {'name': name},
+      final newSpaceData = await ApiSpaceService.createSpace(
+        name: name,
+        description: description,
       );
-      
-      final newSpace = Space.fromJson(response.data);
+      final newSpace = Space.fromJson(newSpaceData);
       
       state = state.copyWith(
         spaces: [...state.spaces, newSpace],
         isLoading: false,
       );
-    } on DioException catch (e) {
-      final errorMsg = e.response?.data?['detail'] ?? 'Failed to create space';
-      state = state.copyWith(isLoading: false, error: errorMsg);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'An unexpected error occurred');
+      state = state.copyWith(isLoading: false, error: 'Fehler beim Erstellen: $e');
     }
   }
 
@@ -90,22 +75,15 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      final response = await _dioClient.dio.post(
-        ApiConstants.joinSpace,
-        data: {'invite_code': inviteCode},
-      );
-      
-      final joinedSpace = Space.fromJson(response.data);
+      final joinedSpaceData = await ApiSpaceService.joinSpace(inviteCode: inviteCode);
+      final joinedSpace = Space.fromJson(joinedSpaceData);
       
       state = state.copyWith(
         spaces: [...state.spaces, joinedSpace],
         isLoading: false,
       );
-    } on DioException catch (e) {
-      final errorMsg = e.response?.data?['detail'] ?? 'Failed to join space';
-      state = state.copyWith(isLoading: false, error: errorMsg);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'An unexpected error occurred');
+      state = state.copyWith(isLoading: false, error: 'Fehler beim Beitreten: $e');
     }
   }
 
@@ -113,19 +91,36 @@ class SpaceNotifier extends StateNotifier<SpaceState> {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      final response = await _dioClient.dio.get('${ApiConstants.spaces}/$spaceId');
-      final space = SpaceWithMembers.fromJson(response.data);
+      // Suche Space in lokaler Liste
+      final space = state.spaces.firstWhere(
+        (s) => s.id == spaceId,
+        orElse: () => throw Exception('Space nicht gefunden'),
+      );
+      
+      // Erstelle SpaceWithMembers (ohne echte Mitglieder)
+      final spaceWithMembers = SpaceWithMembers(
+        id: space.id,
+        name: space.name,
+        inviteCode: space.inviteCode,
+        createdAt: space.createdAt,
+        updatedAt: space.updatedAt,
+        ownerUserId: 'current_user',
+        status: 'active',
+        members: [],
+      );
       
       state = state.copyWith(
-        currentSpace: space,
+        currentSpace: spaceWithMembers,
         isLoading: false,
       );
-    } on DioException catch (e) {
-      final errorMsg = e.response?.data?['detail'] ?? 'Failed to load space details';
-      state = state.copyWith(isLoading: false, error: errorMsg);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'An unexpected error occurred');
+      state = state.copyWith(isLoading: false, error: 'Fehler beim Laden: $e');
     }
+  }
+
+  // Debug: Lösche alle Spaces (nur lokal, API hat keinen clearAll)
+  Future<void> clearAll() async {
+    state = const SpaceState();
   }
 }
 

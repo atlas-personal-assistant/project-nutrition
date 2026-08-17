@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  nutrition-backend:
+    build: ./backend
+    container_name: nutrition-backend
+    env_file:
+      - .env
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/logs:/app/logs
+    environment:
+      - DATABASE_URL=sqlite:///app/data/nutrition.db
+      - LOG_LEVEL=info
+    ports:
+      - "8001:8000"
+    restart: unless-stopped
+
+volumes:
+  nutrition-data:

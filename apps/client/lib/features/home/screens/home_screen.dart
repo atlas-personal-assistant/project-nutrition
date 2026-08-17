@@ -21,14 +21,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(authProvider.notifier).checkAuthStatus();
+      ref.read(authProvider).checkAuthStatus();
       ref.read(spaceProvider.notifier).loadSpaces();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
+    final authNotifier = ref.watch(authProvider);
+    final authState = authNotifier.state;
     final spaceState = ref.watch(spaceProvider);
     final user = authState.user;
 
@@ -48,7 +49,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout_outlined),
             onPressed: () async {
-              await ref.read(authProvider.notifier).logout();
+              await ref.read(authProvider).logout();
               if (mounted) context.go('/login');
             },
           ),
@@ -363,7 +364,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             title: 'Abmelden',
             textColor: AppColors.error,
             onTap: () async {
-              await ref.read(authProvider.notifier).logout();
+              await ref.read(authProvider).logout();
               if (mounted) context.go('/login');
             },
           ),
