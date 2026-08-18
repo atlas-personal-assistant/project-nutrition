@@ -39,15 +39,6 @@ jobs:
         flutter build apk --debug
     
     - name: Create Release with direct APK
-      if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
-      with:
-        files: apps/client/build/app/outputs/flutter-apk/app-debug.apk
-        generate_release_notes: true
-        tag_name: ${{ github.ref_name }}
-    
-    - name: Create Release on push (auto-generated tag)
-      if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         files: apps/client/build/app/outputs/flutter-apk/app-debug.apk

@@ -55,7 +55,7 @@ class ApiAuthService {
   }) async {
     try {
       final response = await _dio.post(
-        '/api/auth/register',
+        ApiConstants.register,
         data: {
           'display_name': displayName,
           'email': email,
@@ -88,7 +88,7 @@ class ApiAuthService {
   }) async {
     try {
       final response = await _dio.post(
-        '/api/auth/login',
+        ApiConstants.login,
         options: Options(
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         ),
