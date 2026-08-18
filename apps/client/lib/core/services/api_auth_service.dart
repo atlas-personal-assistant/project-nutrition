@@ -89,10 +89,10 @@ class ApiAuthService {
     try {
       final response = await _dio.post(
         ApiConstants.login,
-        options: Options(
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        ),
-        data: 'username=$email&password=$password',
+        data: {
+          'email': email,
+          'password': password,
+        },
       );
       
       if (response.statusCode == 200) {
