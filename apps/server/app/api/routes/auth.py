@@ -68,7 +68,12 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 async def login(credentials: UserLogin, db: Session = Depends(get_db)):
+    # Try email first, then username (display_name)
     user = db.query(User).filter(User.email == credentials.email).first()
+    if not user:
+        # Fallback: try login with display_name (for master account etc.)
+        user = db.query(User).filter(User.display_name == credentials.email).first()
+    
     if not user or not verify_password(credentials.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
@@ -86,8 +91,30 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
         }
     }
 
+from fastapi import Request
+from jose import JWTError, jwt
+from app.core.security import SECRET_KEY, ALGORITHM
+
+async def get_current_user_id(request: Request) -> int:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    token = auth_header[7:]  # Remove "Bearer "
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return int(user_id)
+    except (JWTError, ValueError):
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(current_user_id: int = Depends(lambda: 1), db: Session = Depends(get_db)):
+async def get_current_user_info(
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
     user = db.query(User).filter(User.id == current_user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

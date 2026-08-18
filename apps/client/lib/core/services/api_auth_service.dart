@@ -57,7 +57,7 @@ class ApiAuthService {
       final response = await _dio.post(
         '/api/auth/register',
         data: {
-          'username': displayName,
+          'display_name': displayName,
           'email': email,
           'password': password,
         },
@@ -66,6 +66,11 @@ class ApiAuthService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
         await setToken(data['access_token']);
+        // Return user directly from register response instead of calling /me
+        // because the token needs to be set first for the interceptor
+        if (data['user'] != null) {
+          return Map<String, dynamic>.from(data['user']);
+        }
         return await getCurrentUser() ?? {};
       }
       throw Exception('Registrierung fehlgeschlagen');
@@ -93,6 +98,10 @@ class ApiAuthService {
       if (response.statusCode == 200) {
         final data = response.data;
         await setToken(data['access_token']);
+        // Return user directly from login response
+        if (data['user'] != null) {
+          return Map<String, dynamic>.from(data['user']);
+        }
         return await getCurrentUser() ?? {};
       }
       throw Exception('Login fehlgeschlagen');
