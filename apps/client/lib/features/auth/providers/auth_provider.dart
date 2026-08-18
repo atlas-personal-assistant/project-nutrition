@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/api_auth_service.dart';
+import '../../../core/services/local_auth_service.dart';
 import '../models/auth_models.dart';
 
 enum AuthStatus { initial, loading, authenticated, unauthenticated }
@@ -43,10 +44,15 @@ class AuthNotifier extends ChangeNotifier {
     _setState(const AuthState(status: AuthStatus.loading));
     
     try {
-      final userData = await ApiAuthService.registerUser(
+      // Offline-first: Use local auth service
+      await LocalAuthService.registerUser(
         email: email.trim(),
         password: password,
         displayName: displayName.trim(),
+      );
+      final userData = await LocalAuthService.loginUser(
+        email: email.trim(),
+        password: password,
       );
 
       if (userData.isNotEmpty) {
@@ -73,7 +79,7 @@ class AuthNotifier extends ChangeNotifier {
     _setState(const AuthState(status: AuthStatus.loading));
     
     try {
-      final userData = await ApiAuthService.loginUser(
+      final userData = await LocalAuthService.loginUser(
         email: email.trim(),
         password: password,
       );
@@ -98,12 +104,12 @@ class AuthNotifier extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await ApiAuthService.logout();
+    await LocalAuthService.logout();
     _setState(const AuthState(status: AuthStatus.unauthenticated));
   }
 
   Future<void> checkAuthStatus() async {
-    final userData = await ApiAuthService.getCurrentUser();
+    final userData = await LocalAuthService.getCurrentUser();
     if (userData != null) {
       final user = _createUserFromData(userData);
       _setState(AuthState(user: user, status: AuthStatus.authenticated));
@@ -124,7 +130,7 @@ class AuthNotifier extends ChangeNotifier {
   }
 
   Future<void> clearAllData() async {
-    await ApiAuthService.clearAll();
+    await LocalAuthService.clearAll();
     _setState(const AuthState(status: AuthStatus.unauthenticated));
   }
 }
