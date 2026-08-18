@@ -38,22 +38,22 @@ jobs:
         cd apps/client
         flutter build apk --debug
     
-    - name: Upload APK as Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug-apk
-        path: apps/client/build/app/outputs/flutter-apk/app-debug.apk
-    
-    - name: Upload APK for direct download
-      uses: actions/upload-artifact@v4
-      with:
-        name: nutrition-app-debug
-        path: apps/client/build/app/outputs/flutter-apk/app-debug.apk
-        retention-days: 5
-    
-    - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
+    - name: Create Release with direct APK
+      if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         files: apps/client/build/app/outputs/flutter-apk/app-debug.apk
         generate_release_notes: true
+        tag_name: ${{ github.ref_name }}
+    
+    - name: Create Release on push (auto-generated tag)
+      if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: apps/client/build/app/outputs/flutter-apk/app-debug.apk
+        generate_release_notes: true
+        tag_name: auto-build-${{ github.run_number }}
+        name: Auto Build ${{ github.run_number }}
+        body: |
+          Automatischer Build vom Push auf main.
+          Direkter APK Download unten.
