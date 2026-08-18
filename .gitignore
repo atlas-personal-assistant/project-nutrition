@@ -16,20 +16,25 @@ apps/client/pubspec.lock
 *.iml
 
 # Python / FastAPI
-services/api/__pycache__/
-services/api/*.py[cod]
-services/api/*$py.class
-services/api/.venv/
-services/api/venv/
-services/api/env/
-services/api/.env
-services/api/.env.local
-services/api/.env.*.local
-services/api/*.egg-info/
-services/api/dist/
-services/api/.pytest_cache/
-services/api/.mypy_cache/
-services/api/htmlcov/
+__pycache__/
+*.py[cod]
+*$$py.class
+.venv/
+venv/
+env/
+.env
+.env.local
+.env.*.local
+*.egg-info/
+dist/
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+
+# SQLite Databases
+*.db
+*.sqlite
+*.sqlite3
 
 # Docker
 *.log
