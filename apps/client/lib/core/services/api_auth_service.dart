@@ -118,7 +118,7 @@ class ApiAuthService {
     if (token == null) return null;
     
     try {
-      final response = await _dio.get('/api/auth/me');
+      final response = await _dio.get(ApiConstants.me);
       if (response.statusCode == 200) {
         return response.data;
       }
