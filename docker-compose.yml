@@ -1,20 +1,27 @@
 version: '3.8'
 
 services:
-  nutrition-backend:
-    build: ./backend
-    container_name: nutrition-backend
-    env_file:
-      - .env
-    volumes:
-      - ./backend/data:/app/data
-      - ./backend/logs:/app/logs
-    environment:
-      - DATABASE_URL=sqlite:///app/data/nutrition.db
-      - LOG_LEVEL=info
+  nutrition-server:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    container_name: nutrition-server
     ports:
       - "8001:8000"
+    volumes:
+      - nutrition_data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:////app/data/nutrition.db
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - CORS_ORIGINS=*
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 volumes:
-  nutrition-data:
+  nutrition_data:
+    driver: local
