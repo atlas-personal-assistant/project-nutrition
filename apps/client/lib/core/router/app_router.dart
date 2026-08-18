@@ -31,16 +31,10 @@ final authRefreshProvider = Provider<AuthRefreshNotifier>((ref) {
 // Router provider
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authProvider);
-  final refreshNotifier = ref.watch(authRefreshProvider);
-  
-  // Update refresh notifier when auth changes
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    refreshNotifier.update(authNotifier.state.status);
-  });
   
   return GoRouter(
     initialLocation: '/login',
-    refreshListenable: refreshNotifier,
+    refreshListenable: authNotifier,
     redirect: (context, state) {
       final authState = authNotifier.state;
       final isLoading = authState.status == AuthStatus.loading;

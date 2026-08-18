@@ -78,6 +78,15 @@ class AuthNotifier extends ChangeNotifier {
         password: password,
       );
 
+      // Validierung: Server muss valide User-Daten liefern
+      if (userData.isEmpty || userData['id'] == null || userData['email'] == null) {
+        _setState(const AuthState(
+          status: AuthStatus.unauthenticated,
+          error: 'Ungültige Server-Antwort',
+        ));
+        return;
+      }
+
       final user = _createUserFromData(userData);
       _setState(AuthState(user: user, status: AuthStatus.authenticated));
     } catch (e) {
@@ -107,7 +116,7 @@ class AuthNotifier extends ChangeNotifier {
     return User(
       id: data['id']?.toString() ?? '',
       email: data['email']?.toString() ?? '',
-      displayName: data['username']?.toString() ?? '',
+      displayName: data['display_name']?.toString() ?? data['username']?.toString() ?? '',
       status: 'active',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),

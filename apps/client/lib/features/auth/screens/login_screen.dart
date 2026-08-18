@@ -181,9 +181,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextButton(
                     onPressed: authState.isLoading 
                       ? null 
-                      : () {
-                          // Navigation zu Register — Router erlaubt das
-                        },
+                      : () => context.push('/register'),
                     child: const Text('Registrieren'),
                   ),
                 ],
