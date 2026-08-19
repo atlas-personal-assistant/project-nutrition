@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/theme/app_theme.dart';
-import 'core/router/app_router.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/register_screen.dart';
@@ -42,8 +41,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   void initState() {
     super.initState();
     
-    // Initiales Auth-Check beim App-Start
-    // Verzögert, damit Provider bereits initialisiert ist
+    // Auth beim App-Start checken
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(authProvider).checkAuthStatus();
     });
@@ -102,12 +100,10 @@ class _MyAppState extends ConsumerState<MyApp> {
     // Watch auth changes and update the global notifier
     final authState = ref.watch(authProvider).state;
     
-    // Update notifier when auth changes (triggers GoRouter redirect)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_routerRefreshNotifier.value != authState.status) {
-        _routerRefreshNotifier.value = authState.status;
-      }
-    });
+    // Synchroner Update — kein addPostFrameCallback!
+    if (_routerRefreshNotifier.value != authState.status) {
+      _routerRefreshNotifier.value = authState.status;
+    }
 
     return MaterialApp.router(
       title: 'Project Nutrition',

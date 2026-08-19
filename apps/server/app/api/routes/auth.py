@@ -118,4 +118,10 @@ async def get_current_user_info(
     user = db.query(User).filter(User.id == current_user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    return {
+        "id": user.id,
+        "email": user.email,
+        "display_name": user.display_name,
+        "status": user.status,
+        "created_at": str(user.created_at)
+    }
