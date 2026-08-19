@@ -33,6 +33,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(spaces.router, prefix="/api/v1/spaces", tags=["spaces"])
+app.include_router(spaces.router, prefix="/api/spaces", tags=["spaces"])  # Alias für Flutter Client
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 
 @app.get("/")

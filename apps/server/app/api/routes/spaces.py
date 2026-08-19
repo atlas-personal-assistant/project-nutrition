@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from datetime import datetime
 import random
 import string
 
@@ -19,16 +20,28 @@ class SpaceResponse(BaseModel):
     owner_user_id: int
     status: str
     created_at: str
-    
-    class Config:
-        orm_mode = True
 
 class JoinSpace(BaseModel):
-    invite_code: str
+    invite_code: str = None
+    join_code: str = None
+    
+    def get_code(self):
+        return self.invite_code or self.join_code or ''
 
 def generate_invite_code():
     """Generate a random 6-character invite code"""
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+def space_to_dict(space):
+    """Convert SQLAlchemy Space object to dictionary"""
+    return {
+        "id": space.id,
+        "name": space.name,
+        "invite_code": space.invite_code,
+        "owner_user_id": space.owner_user_id,
+        "status": space.status,
+        "created_at": str(space.created_at)
+    }
 
 @router.post("/", response_model=SpaceResponse)
 async def create_space(space_data: SpaceCreate, db: Session = Depends(get_db)):
@@ -60,16 +73,17 @@ async def create_space(space_data: SpaceCreate, db: Session = Depends(get_db)):
     db.add(membership)
     db.commit()
     
-    return new_space
+    return space_to_dict(new_space)
 
 @router.get("/", response_model=list[SpaceResponse])
 async def get_spaces(db: Session = Depends(get_db)):
     spaces = db.query(Space).all()
-    return spaces
+    return [space_to_dict(s) for s in spaces]
 
 @router.post("/join", response_model=SpaceResponse)
 async def join_space(join_data: JoinSpace, db: Session = Depends(get_db)):
-    space = db.query(Space).filter(Space.invite_code == join_data.invite_code).first()
+    code = join_data.get_code()
+    space = db.query(Space).filter(Space.invite_code == code).first()
     if not space:
         raise HTTPException(status_code=404, detail="Invalid invite code")
     
@@ -95,11 +109,20 @@ async def join_space(join_data: JoinSpace, db: Session = Depends(get_db)):
     db.add(membership)
     db.commit()
     
-    return space
+    return space_to_dict(space)
+
+# Alias Endpunkte für Flutter Client
+@router.post("/create", response_model=SpaceResponse)
+async def create_space_alias(space_data: SpaceCreate, db: Session = Depends(get_db)):
+    return await create_space(space_data, db)
+
+@router.get("/list", response_model=list[SpaceResponse])
+async def get_spaces_alias(db: Session = Depends(get_db)):
+    return await get_spaces(db)
 
 @router.get("/{space_id}", response_model=SpaceResponse)
 async def get_space(space_id: int, db: Session = Depends(get_db)):
     space = db.query(Space).filter(Space.id == space_id).first()
     if not space:
         raise HTTPException(status_code=404, detail="Space not found")
-    return space
+    return space_to_dict(space)

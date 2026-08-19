@@ -39,7 +39,7 @@ class ApiSpaceService {
         'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
-        'join_code': inviteCode,
+        'invite_code': inviteCode,
       }),
     );
     
