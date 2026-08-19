@@ -12,6 +12,7 @@ router = APIRouter()
 
 class SpaceCreate(BaseModel):
     name: str
+    description: str = ''
     
 class SpaceResponse(BaseModel):
     id: int

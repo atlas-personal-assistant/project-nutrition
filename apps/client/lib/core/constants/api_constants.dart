@@ -20,5 +20,7 @@ class ApiConstants {
   
   // Space Endpoints (relative to apiVersion)
   static const String spaces = '/spaces';
+  static const String createSpace = '/spaces/create';
   static const String joinSpace = '/spaces/join';
+  static const String listSpaces = '/spaces/list';
 }
