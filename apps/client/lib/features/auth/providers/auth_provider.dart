@@ -27,7 +27,8 @@ class AuthNotifier extends ChangeNotifier {
   AuthState get state => _state;
   
   AuthNotifier() {
-    checkAuthStatus();
+    // checkAuthStatus wird explizit von main.dart aufgerufen
+    // Nicht automatisch im Constructor, um Race Conditions zu vermeiden
   }
 
   void _setState(AuthState newState) {

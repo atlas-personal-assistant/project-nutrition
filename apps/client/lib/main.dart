@@ -41,6 +41,13 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
+    
+    // Initiales Auth-Check beim App-Start
+    // Verzögert, damit Provider bereits initialisiert ist
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authProvider).checkAuthStatus();
+    });
+    
     _router = GoRouter(
       initialLocation: '/login',
       refreshListenable: _routerRefreshNotifier,
