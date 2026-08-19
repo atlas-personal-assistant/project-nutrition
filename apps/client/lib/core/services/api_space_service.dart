@@ -10,7 +10,7 @@ class ApiSpaceService {
     final token = await ApiAuthService.getToken();
     
     final response = await http.post(
-      Uri.parse('$baseUrl/api/spaces/create'),
+      Uri.parse('$baseUrl/spaces/create'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -33,7 +33,7 @@ class ApiSpaceService {
     final token = await ApiAuthService.getToken();
     
     final response = await http.post(
-      Uri.parse('$baseUrl/api/spaces/join'),
+      Uri.parse('$baseUrl/spaces/join'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -55,7 +55,7 @@ class ApiSpaceService {
     final token = await ApiAuthService.getToken();
     
     final response = await http.get(
-      Uri.parse('$baseUrl/api/spaces/list'),
+      Uri.parse('$baseUrl/spaces/list'),
       headers: {
         'Authorization': 'Bearer $token',
       },
